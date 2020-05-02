@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
 
     $email_id       =   clean_user_input($_POST["email"]);
 
+ 
 
     $statement = $db_con->prepare("INSERT INTO ".DB_PREFIX."admin(name, username, loginpwd, email_id) VALUES (:name, :username, :loginpwd, :email_id)");
     $insert_stat = $statement->execute(array(
@@ -20,11 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         "loginpwd" => $loginpwd,
         "email_id" => $email_id
     ));
-    
-   if($insert_stat == "1"){
-      header('Location: login.php?confirm=1');
+
+     $collection_id = $db_con->lastInsertId();
+     $token = bin2hex(random_bytes(64));
+     $sql_query2 = "INSERT INTO ".DB_PREFIX."auth_tokens(token, user_id) VALUES (:token, :collection_id)";
+     $statement2         =   $db_con->prepare($sql_query2);
+     $statement2->bindValue(":collection_id", $collection_id, PDO::PARAM_INT);
+     $statement2->bindValue(":token",             $token,     PDO::PARAM_STR);
+     $response2           =   $statement2->execute(); 
+
+     if($insert_stat == "1"){
+       header('Location: login.php?confirm=1');
       exit();
-  }
+    }
 }
 ?>
 
